@@ -11,12 +11,64 @@ const EVENTS = [
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 let toastTimer;
 function toast(message,error=false){const el=$("#toast");el.textContent=message;el.classList.toggle("error",error);el.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),3500)}
-function renderEvents(filter="All"){
- const visible=EVENTS.filter(e=>filter==="All"||e.category===filter);
- $("#eventCount").textContent=`${String(visible.length).padStart(2,"0")} EVENTS`;
- $("#eventsGrid").innerHTML=visible.map(e=>`<article class="event-card" style="--event-accent:${e.accent}"><div class="event-card-image"><img src="/college-event/${e.image.split('/').pop()}"
-     alt="${e.name} event artwork"
-     loading="lazy">
+function renderEvents(filter = "All") {
+    const visible = EVENTS.filter(
+        e => filter === "All" || e.category === filter
+    );
+
+    $("#eventCount").textContent =
+        `${String(visible.length).padStart(2, "0")} EVENTS`;
+
+    $("#eventsGrid").innerHTML = visible.map(e => {
+        const imageName = e.image
+            ? e.image.split("/").pop()
+            : "hackathon.jpg";
+
+        const imagePath = `/college-event/${imageName}`;
+
+        return `
+        <article class="event-card" style="--event-accent:${e.accent}">
+            <div class="event-card-image">
+                <img
+                    src="${imagePath}"
+                    alt="${e.name} event artwork"
+                    loading="lazy"
+                    onerror="this.onerror=null;this.src='/college-event/images.png';"
+                >
+                <span class="event-tag">${e.category}</span>
+            </div>
+
+            <div class="event-card-top">
+                <span class="event-symbol">${e.icon}</span>
+                <span class="event-date">EVENT / ${e.id.toUpperCase()}</span>
+            </div>
+
+            <h3>${e.name}</h3>
+
+            <div class="event-meta">
+                <span>▦ ${e.displayDate}</span>
+                <span>◷ ${e.time}</span>
+                <span>⌖ ${e.venue}</span>
+            </div>
+
+            <p class="event-description">${e.description}</p>
+
+            <div class="event-bottom">
+                <span class="event-date">JOIN THE EXPERIENCE</span>
+                <button
+                    class="event-register"
+                    data-register="${e.id}"
+                    type="button"
+                >Register ↗</button>
+            </div>
+        </article>`;
+    }).join("");
+
+    $$("#eventFilters button").forEach(b => {
+        const active = b.dataset.filter === filter;
+        b.classList.toggle("active", active);
+        b.setAttribute("aria-pressed", String(active));
+    });
 }
 function populateEvents(){const select=$("#eventSelect");EVENTS.forEach(e=>{const o=document.createElement("option");o.value=e.id;o.textContent=`${e.name} — ${e.displayDate}`;select.append(o)})}
 function countdown(){const now=Date.now(),next=EVENTS.map(e=>({...e,stamp:Date.parse(e.date)})).filter(e=>e.stamp>now).sort((a,b)=>a.stamp-b.stamp)[0];if(!next){$("#nextEventName").textContent="More events coming soon";$("#nextEventDate").textContent="Check back for updates";return}$("#nextEventName").textContent=next.name;$("#nextEventDate").textContent=`${next.displayDate} · ${next.time} · ${next.venue}`;let s=Math.max(0,Math.floor((next.stamp-now)/1000));const d=Math.floor(s/86400);s%=86400;const h=Math.floor(s/3600);s%=3600;const m=Math.floor(s/60);s%=60;[d,h,m,s].forEach((v,i)=>$("#"+["countDays","countHours","countMinutes","countSeconds"][i]).textContent=String(v).padStart(2,"0"))}
